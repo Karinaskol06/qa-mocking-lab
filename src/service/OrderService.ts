@@ -90,7 +90,7 @@ export class OrderService {
         await this.emailClient.send(
             normalizedEmail,
             `Order ${order.id} confirmed`,
-            this.buildEmailBody(order, totalCents, input.currency)
+            this.buildEmailBody(order, totalCents, input.currency, payment.transactionId)
         );
 
         return { order, totalCents, payment };
@@ -170,10 +170,10 @@ export class OrderService {
         }
     }
 
-    private buildEmailBody(order: Order, totalCents: number, currency: "USD" | "EUR") {
+    private buildEmailBody(order: Order, totalCents: number, currency: "USD" | "EUR", transactionId?: string) {
         const money = this.formatMoney(totalCents, currency);
         const lines = order.items.map((i) => `- ${i.sku} x${i.qty}`);
-        return [
+        const body = [
             `Thanks for your purchase!`,
             ``,
             `Order: ${order.id}`,
@@ -181,7 +181,13 @@ export class OrderService {
             ...lines,
             ``,
             `Total: ${money}`,
-        ].join("\n");
+        ];
+
+        if (transactionId) {
+            body.push(`Transaction ID: ${transactionId}`);
+        }
+
+        return body.join("\n");
     }
 
     private formatMoney(cents: number, currency: "USD" | "EUR") {
